@@ -8,10 +8,11 @@
 #include "driverlib/gpio.h"
 #include "driverlib/timer.h"
 
+uint32_t ui32PeriodHigh = 0;
+uint32_t ui32PeriodLow = 0;
+
 void main(void)
 {
-    uint32_t ui32Period = 0;
-
     // Set up the clock f = 40 MHz
     SysCtlClockSet(SYSCTL_SYSDIV_5 | SYSCTL_USE_PLL | SYSCTL_XTAL_16MHZ | SYSCTL_OSC_MAIN);
 
@@ -24,8 +25,9 @@ void main(void)
     TimerConfigure(TIMER0_BASE, TIMER_CFG_PERIODIC);
 
     // (40 MHz / 10 Hz) * 43% DC
-    ui32Period = (SysCtlClockGet() / 10) * 0.43;
-    TimerLoadSet(TIMER0_BASE, TIMER_A, ui32Period -1);
+    ui32PeriodHigh = (SysCtlClockGet() / 10) * 0.43;
+    ui32PeriodLow = (SysCtlClockGet() / 10) * 0.57;
+    TimerLoadSet(TIMER0_BASE, TIMER_A, ui32PeriodHigh - 1);
 
     // Enable interrupts
     IntEnable(INT_TIMER0A);
@@ -50,9 +52,11 @@ void Timer0IntHandler(void)
     if(GPIOPinRead(GPIO_PORTF_BASE, GPIO_PIN_2))
     {
         GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3, 0);
+        TimerLoadSet(TIMER0_BASE, TIMER_A, ui32PeriodLow - 1);
     }
     else
     {
         GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, 4);
+        TimerLoadSet(TIMER0_BASE, TIMER_A, ui32PeriodHigh - 1);
     }
 }

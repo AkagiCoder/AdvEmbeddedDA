@@ -9,13 +9,16 @@
 #include "driverlib/gpio.h"
 #include "driverlib/timer.h"
 
+uint32_t ui32PeriodHigh = 0;
+uint32_t ui32PeriodLow = 0;
+
 // Timer1 delay function where delayT is the number of seconds to delay.
 void timer1A_delay(int delayT)
 {
     int i;
     TimerDisable(TIMER1_BASE, TIMER_A);                 // Disable Timer1A
     TimerConfigure(TIMER1_BASE, TIMER_CFG_PERIODIC);    // Configure Timer1 to be periodic
-    TimerLoadSet(TIMER1_BASE, TIMER_A, 3999999);        // 1 Hz
+    TimerLoadSet(TIMER1_BASE, TIMER_A, 39999999);       // 1 Hz
     TIMER1_ICR_R = 0x1;                                 // Clear the Timer1A timeout flag
     TimerEnable(TIMER1_BASE, TIMER_A);                  // Enable Timer1A
 
@@ -29,8 +32,6 @@ void timer1A_delay(int delayT)
 
 void main(void)
 {
-    uint32_t ui32Period = 0;
-
     // Set up the clock f = 40 MHz
     SysCtlClockSet(SYSCTL_SYSDIV_5 | SYSCTL_USE_PLL | SYSCTL_XTAL_16MHZ | SYSCTL_OSC_MAIN);
 
@@ -58,8 +59,10 @@ void main(void)
     SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER1);
 
     // (40 MHz / 10 Hz) * 43% DC
-    ui32Period = (SysCtlClockGet() / 10) * 0.43;
-    TimerLoadSet(TIMER0_BASE, TIMER_A, ui32Period - 1);
+    ui32PeriodHigh = (SysCtlClockGet() / 10) * 0.43;
+    ui32PeriodLow = (SysCtlClockGet() / 10) * 0.57;
+    TimerLoadSet(TIMER0_BASE, TIMER_A, ui32PeriodHigh - 1);
+
 
     // Enable interrupts
     IntEnable(INT_TIMER0A);                             // TIMER0A
@@ -87,10 +90,12 @@ void Timer0IntHandler(void)
     if(GPIOPinRead(GPIO_PORTF_BASE, GPIO_PIN_2))
     {
         GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3, 0);
+        TimerLoadSet(TIMER0_BASE, TIMER_A, ui32PeriodLow - 1);
     }
     else
     {
         GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, 4);
+        TimerLoadSet(TIMER0_BASE, TIMER_A, ui32PeriodHigh - 1);
     }
 }
 
