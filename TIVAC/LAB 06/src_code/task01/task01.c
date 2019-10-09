@@ -59,7 +59,7 @@ void main(void)
         ROM_PWMPulseWidthSet(PWM1_BASE, PWM_OUT_0, ui8Adjust * ui32Load / 1000);
         ROM_SysCtlDelay(40000000);     // 3-second delay
 
-        // 165 degrees [Maximum angle specified by PowerHD 30001HB datasheet
+        // 165 degrees [Maximum angle specified by PowerHD 30001HB datasheet]
         ui8Adjust = 121;
         ROM_PWMPulseWidthSet(PWM1_BASE, PWM_OUT_0, ui8Adjust * ui32Load / 1000);
         ROM_SysCtlDelay(40000000);        // 3-second delay
