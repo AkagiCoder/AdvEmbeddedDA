@@ -11,10 +11,14 @@
 #include "driverlib/rom.h"
 #include "driverlib/adc.h"
 #include "driverlib/qei.h"
+#include "utils/uartstdio.h"
+#include "driverlib/uart.h"
+
 
 #define PWM_FREQUENCY 55
 
 volatile int qeiPosition;
+volatile int qeiVelocity;
 
 void main(void)
 {
@@ -84,12 +88,25 @@ void main(void)
     // Configure quadrature encoder, use an arbitrary top limit of 1000
     QEIConfigure(QEI0_BASE, (QEI_CONFIG_CAPTURE_A_B | QEI_CONFIG_NO_RESET
     | QEI_CONFIG_QUADRATURE | QEI_CONFIG_NO_SWAP), 1000);
+    QEIVelocityConfigure(QEI0_BASE, QEI_VELDIV_1, SysCtlClockGet());
 
     // Enable the quadrature encoder.
     QEIEnable(QEI0_BASE);
 
     //Set position to a middle value so we can see if things are working
     QEIPositionSet(QEI0_BASE, 500);
+    QEIVelocityEnable(QEI0_BASE);
+
+    // Set up GPIOA for UART
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
+    // Enable UART0 so that we can configure the clock.
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
+    // Use the internal 16MHz oscillator as the UART clock source.
+    UARTClockSourceSet(UART0_BASE, UART_CLOCK_PIOSC);
+    // Select the alternate (UART) function for these pins.
+    GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
+    // Initialize the UART for console I/O.
+    UARTStdioConfig(0, 115200, 16000000);
 
     while(1)
     {
@@ -123,8 +140,10 @@ void main(void)
                 PWMPulseWidthSet(PWM0_BASE, PWM_OUT_4, 10225);
         }
 
-        // Read the speed of the motor using QEI
+        // Read the position and speed of the motor using QEI
         qeiPosition = QEIPositionGet(QEI0_BASE);
+        qeiVelocity = QEIVelocityGet(QEI0_BASE);
+        UARTprintf("QEI Velocity: %d\n", qeiVelocity);
         SysCtlDelay(10000);
 
     }
