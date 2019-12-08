@@ -1,0 +1,9 @@
+TIVAC
+LABS: 3, 4, 5, 6, 7, 8, 9, Mid-Term with MPU6050
+
+TIRTOS with TIVAC
+LABS: 4, 5, 6, 7, 8
+TI-RTOS Assignment
+
+CC1350
+LABS: 2(GUI), 3, 5
